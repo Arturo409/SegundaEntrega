@@ -1,0 +1,115 @@
+<html>
+<head>
+    {% load pwa %}
+    {% progressive_web_app_meta %}
+    {% load static %}
+    <title>Mau Fuenbus</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no,
+    initial-scale=1, maximum-scale=1, minimum-scale=1">
+    
+    
+    {% block boostrap %} {% endblock %}
+    {% block boostrap4 %} {% endblock %}
+     {% block css %} {% endblock %}
+    <link rel="stylesheet" href="{% static 'sitio/font/fontello.css' %}">
+    <link rel="stylesheet" href="{% static 'sitio/css/style_base.css' %}">
+   
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+    <!--<script src="https://www.gstatic.com/firebasejs/8.1.2/firebase-app.js"></script> -->
+    <script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-messaging.js"></script>
+    
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+         https://firebase.google.com/docs/web/setup#available-libraries -->
+    
+    <script>
+      // Your web app's Firebase configuration
+      var firebaseConfig = {
+        apiKey: "AIzaSyD4fcrcvxhWanaghzlJKrDZNLpU0O5kcmc",
+        authDomain: "fotografia-55188.firebaseapp.com",
+        projectId: "fotografia-55188",
+        storageBucket: "fotografia-55188.appspot.com",
+        messagingSenderId: "391930439203",
+        appId: "1:391930439203:web:7b91aad3cd5db494757396"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    
+      let messaging = firebase.messaging();
+    
+      //enlace service worker
+      navigator.serviceWorker
+      .register('./serviceworker.js')
+      .then(function(register){
+    
+          messaging.useServiceWorker(register);
+    
+          //solicitud de permiso a los usuarios
+    
+          messaging.requestPermission()        
+          .then(function(){
+    
+              console.log("El usuario ha aceptado notificaciones")     
+              
+              return messaging.getToken();
+          })
+          .then(function(token){
+              console.log(token);
+    
+              //envio de token a django para guardar en bd
+                fetch('guardar-token/',{
+                    method:'post',
+                    headers:{
+                        'Content-Type':'application/json',
+                        'Accept':'application/json'
+                    },
+                    body:JSON.stringify({
+                        'token':token
+                    })
+                })
+                .then(function(resultado){
+                    console.log("se ha guardado el token")
+                })
+                .catch(function(e){
+                    console.log("el usuario no ha aceptado")
+                })
+    
+          })
+    
+          .catch(function(e){
+              console.log("El usuario no ha aceptado las notificaciones")
+          })
+      })
+    
+      //recepcion de notificaciones push
+      messaging.onMessage(function(payload){
+          console.log("ha llegado notificacion")
+          let data = payload;
+          console.log(data);
+    
+        let title = payload.notification.title;
+        let options = {
+            body: payload.notification.body,
+            icon: payload.notification.icon
+        }
+        let mensaje = new Notification(title, options);
+    
+      });
+    
+    </script>
+</head>
+<body>
+{% block content %}
+
+
+
+
+    {% endblock %}
+    
+    <script src="{% static 'login/js/index/menu.js' %}"></script>
+    
+    {% block bsjs %} {% endblock %}
+</body>
+
+</html>
